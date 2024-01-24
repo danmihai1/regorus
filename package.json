@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "monaco": "^1.201704190613.0",
+    "monaco-editor": "^0.45.0"
+  }
+}
