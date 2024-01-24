@@ -8,7 +8,7 @@
     <link
       rel="stylesheet"
       data-name="vs/editor/editor.main"
-      href="./node_modules/monaco-editor/min/vs/editor/editor.main.css"
+      href="node_modules/monaco-editor/min/vs/editor/editor.main.css"
       />
   </head>
   <body>
@@ -37,12 +37,12 @@
     <script>
       var require = { paths: { vs: './node_modules/monaco-editor/min/vs' } };
     </script>
-    <script src="./node_modules/monaco-editor/min/vs/loader.js"></script>
-    <script src="./node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
-    <script src="./node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+    <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script src="node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
 
     <script type="module">
-      import init, { Engine } from './pkg/regorus.js';
+      import init, { Engine } from 'pkg/regorus.js';
 
       function loadFile(filePath) {
 	  var result = null;
@@ -154,8 +154,8 @@
 	  readOnly: true
       })
 
-      rego_editor.setValue(loadFile("./examples/example.rego"))
-      input_editor.setValue(loadFile("./examples/input.json"))
+      rego_editor.setValue(loadFile("examples/example.rego"))
+      input_editor.setValue(loadFile("examples/input.json"))
 
       function eval_query() {
 	  let policy = rego_editor.getValue();
