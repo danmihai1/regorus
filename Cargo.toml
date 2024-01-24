@@ -9,10 +9,14 @@ keywords = ["interpreter", "opa", "policy-as-code", "rego"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [features]
 default = ["full-opa"]
 
 base64 = ["dep:data-encoding"]
+bindings = ["dep:wasm-bindgen"]
 base64url = ["dep:data-encoding"]
 crypto = ["dep:constant_time_eq", "dep:hmac", "dep:hex", "dep:md-5", "dep:sha1", "dep:sha2"]
 deprecated = []
@@ -32,6 +36,7 @@ yaml = ["serde_yaml"]
 full-opa = [
     "base64",
     "base64url",
+    "bindings",
     "crypto",
     "deprecated",
     "glob",
@@ -82,7 +87,7 @@ uuid = { version = "1.6.1", features = ["v4", "fast-rng"], optional = true }
 jsonschema = { version = "0.17.1", default-features = false, optional = true }
 chrono = { version = "0.4.31", optional = true }
 chrono-tz = { version = "0.8.5", optional = true }
-document-features = "0.2.8"
+wasm-bindgen = { version = "0.2.90", optional = true }
 
 
 [dev-dependencies]
