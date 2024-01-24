@@ -20,6 +20,9 @@ mod value;
 pub use engine::Engine;
 pub use value::Value;
 
+#[cfg(feature = "bindings")]
+pub mod bindings;
+
 /// Location of an [`Expression`] in a Rego query.
 ///
 /// ```
