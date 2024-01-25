@@ -45,10 +45,10 @@ href="{{'node_modules/monaco-editor/min/vs/editor/editor.main.css'|relative_url}
 
 
 
-      import init, { Engine } from '{{ site.baseurl}}/pkg/regorus.js';
+      import init, { Engine } from "{{'pkg/regorus.js'|relative_url}}";
 
       function loadFile(filePath) {
-	      filePath = "{{site.baseurl}}/" + filePath
+	      filePath = `{{site.baseurl}}${filePath}`
      	   var result = null;
 	       var xmlhttp = new XMLHttpRequest();
 	      xmlhttp.open("GET", filePath, false);
