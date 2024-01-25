@@ -3,7 +3,7 @@
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width" />
 <title>Regorus Playground</title>
-<link rel="stylesheet" data-name="vs/editor/editor.main" href="http://localhost:4000/regorus/node_modules/monaco-editor/min/vs/editor/editor.main.css" />
+<link rel="stylesheet" data-name="vs/editor/editor.main" href="/regorus/node_modules/monaco-editor/min/vs/editor/editor.main.css" />
 </head>
 <body>
 <h2>Regorus Playground</h2>
@@ -19,16 +19,16 @@
     <div id="rightPane" style="width:600px; height:600px; float:inline-start">
       <div class="paneheader"> Input JSON</div>
       <div id="input_container" style="height:300px;border: 1px solid grey"></div>
-       <button id="eval" stype="height:10px;padding:float:left">Eval</button>
+<button id="eval" stype="height:10px;padding:float:left">Eval</button>
       <pre id="results" style="height:300px; border: 1px solid grey"></pre>
     </div>
 
     <script>
-      var require = { paths: { vs: "http://localhost:4000/regorus/node_modules/monaco-editor/min/vs" } };
+      var require = { paths: { vs: "/regorus/node_modules/monaco-editor/min/vs" } };
     </script>
-    <script src="http://localhost:4000/regorus/node_modules/monaco-editor/min/vs/loader.js"></script>
-    <script src="http://localhost:4000/regorus/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
-    <script src="http://localhost:4000/regorus/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+    <script src="/regorus/node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="/regorus/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script src="/regorus/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
 	
 	    <script type="module">
 

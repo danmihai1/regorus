@@ -13,7 +13,7 @@ layout: home
 <link
 rel="stylesheet"
 data-name="vs/editor/editor.main"
-href="{{'node_modules/monaco-editor/min/vs/editor/editor.main.css'|absolute_url}}"
+href="{{'node_modules/monaco-editor/min/vs/editor/editor.main.css'|relative_url}}"
 />
 </head>
 <body>
@@ -35,11 +35,11 @@ href="{{'node_modules/monaco-editor/min/vs/editor/editor.main.css'|absolute_url}
     </div>
 
     <script>
-      var require = { paths: { vs: "{{'node_modules/monaco-editor/min/vs'|absolute_url}}" } };
+      var require = { paths: { vs: "{{'node_modules/monaco-editor/min/vs'|relative_url}}" } };
     </script>
-    <script src="{{'node_modules/monaco-editor/min/vs/loader.js'|absolute_url}}"></script>
-    <script src="{{'node_modules/monaco-editor/min/vs/editor/editor.main.nls.js'|absolute_url}}"></script>
-    <script src="{{'node_modules/monaco-editor/min/vs/editor/editor.main.js'|absolute_url}}"></script>
+    <script src="{{'node_modules/monaco-editor/min/vs/loader.js'|relative_url}}"></script>
+    <script src="{{'node_modules/monaco-editor/min/vs/editor/editor.main.nls.js'|relative_url}}"></script>
+    <script src="{{'node_modules/monaco-editor/min/vs/editor/editor.main.js'|relative_url}}"></script>
 	
 	    <script type="module">
 
