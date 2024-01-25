@@ -1,0 +1,200 @@
+---
+# Feel free to add content and custom Front Matter to this file.
+# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
+
+layout: home
+---
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Regorus Playground</title>
+<link
+rel="stylesheet"
+data-name="vs/editor/editor.main"
+href="{{'node_modules/monaco-editor/min/vs/editor/editor.main.css'|absolute_url}}"
+/>
+</head>
+<body>
+<h2>Regorus Playground</h2>
+
+    <div id="leftPane" style="height:1000px; width:700px; float:inline-start">
+      <div class="paneheader">Policy</div>
+
+      <div id="rego_container" style="height:700px; width: 700px; border: 1px solid grey"></div>
+    </div>
+
+    <div style="width:20px; height:600px;float:left"></div>
+
+    <div id="rightPane" style="width:600px; height:600px; float:inline-start">
+      <div class="paneheader"> Input JSON</div>
+      <div id="input_container" style="height:300px;border: 1px solid grey"></div>
+<button id="eval" stype="height:10px;padding:float:left">Eval</button>
+      <pre id="results" style="height:300px; border: 1px solid grey"></pre>
+    </div>
+
+    <script>
+      var require = { paths: { vs: "{{'node_modules/monaco-editor/min/vs'|absolute_url}}" } };
+    </script>
+    <script src="{{'node_modules/monaco-editor/min/vs/loader.js'|absolute_url}}"></script>
+    <script src="{{'node_modules/monaco-editor/min/vs/editor/editor.main.nls.js'|absolute_url}}"></script>
+    <script src="{{'node_modules/monaco-editor/min/vs/editor/editor.main.js'|absolute_url}}"></script>
+	
+	    <script type="module">
+
+
+
+      import init, { Engine } from '{{ site.baseurl}}/pkg/regorus.js';
+
+      function loadFile(filePath) {
+	      filePath = "{{site.baseurl}}/" + filePath
+     	   var result = null;
+	       var xmlhttp = new XMLHttpRequest();
+	      xmlhttp.open("GET", filePath, false);
+	      xmlhttp.send();
+	      if (xmlhttp.status==200) {
+	        result = xmlhttp.responseText;
+	     }
+	     return result;
+      }
+
+
+     monaco.languages.register( { id : 'Rego'})
+
+      let rego_language = {
+	  //	  defaultToken: 'invalid',
+
+	  keywords: [
+	      'as',
+	      'contains',
+	      'default',
+	      'else',
+	      'every',
+	      'false',
+	      'if',
+	      'import',
+	      'in',
+	      'not',
+	      'null',
+	      'package',
+	      'set(',
+	      'some',
+	      'true',
+	      'with',
+	  ],
+	  
+
+          brackets: [
+              ['{','}','delimiter.curly'],
+              ['[',']','delimiter.square'],
+              ['(',')','delimiter.parenthesis']
+          ],
+
+	  operators: [
+	      '+', '-', '*', '/', '%',
+	      '&', '|',
+	      ',', ';', '.',
+	      ':',
+	      '<', '<=', '=', '==', '>', '>=',
+	      '!', '!=',
+	  ],
+
+	  // we include these common regular expressions
+	  symbols:  /[=><!~?:&|+\-*\/\^%]+/,
+
+	  tokenizer: {
+	      root: [
+		  [/[a-zA-Z'_\?\\][\w'\?\\]*/, { cases: {'@keywords': 'keyword',
+							 '@default' : 'identifier' }}],
+
+		  [':=', 'keyword'],
+
+		  [/"[^\\"]*"/,  'string'],
+		  [/`[^\\`]*`/,  'string'],
+
+		  // delimiters and operators
+		  [/[{}()\[\]]/, '@brackets'],
+		  [/[<>](?!@symbols)/, '@brackets'],
+
+
+		  [/@symbols/, { cases: { '@operators': 'delimiter',
+					  '@default'  : '' } } ],
+
+		  // numbers
+		  [/[0-9_]*\.[0-9_]+([eE][\-+]?\d+)?[fFdD]?/, 'number.float'],
+		  [/[0-9_]+/, 'number'],
+
+		  // delimiter: after number because of .\d floats
+		  [/[;,.]/, 'delimiter'],
+		  // whitespace
+		  { include: '@whitespace' },
+
+	      ],
+
+	      whitespace: [
+		  [/[ \t\r\n]+/, 'white'],
+		  [/#.*$/,    'comment'],
+	      ],
+
+	  }
+      };
+
+
+      monaco.languages.setMonarchTokensProvider('Rego', rego_language)
+
+
+      let separator = "\n###POLICY###\n"
+      let framework_rego = 'package play'
+      var rego_editor = monaco.editor.create(document.getElementById('rego_container'), {
+	  value: framework_rego,
+	  language: 'Rego',
+	  minimap: { enabled: false },
+      });
+
+      var input_editor = monaco.editor.create(document.getElementById('input_container'), {
+	  value: '{}',
+	  language: 'javascript',
+	  minimap: { enabled: false },
+      });
+
+      var results_editor = monaco.editor.create(document.getElementById('results'), {
+	  value: '{}',
+	  language: 'json',
+	  readOnly: true,
+	  minimap: { enabled: false },
+      })
+
+      rego_editor.setValue(loadFile("examples/example.rego"))
+      input_editor.setValue(loadFile("examples/input.json"))
+
+      function eval_query() {
+	  let policy = rego_editor.getValue();
+	  let files = policy.split(separator)
+
+	  var startTime = new Date();
+	  var engine = new Engine();
+	  for (var i =0; i < files.length; ++i) {
+	      engine.add_policy("policy.rego", files[i])
+	  }
+
+	  let input = input_editor.getValue();
+	  engine.set_input(input);
+	  
+	  let results = engine.eval_query("data");
+	  var elapsed = new Date() - startTime;
+
+	  let output = `// Evaluation took ${elapsed} milliseconds.\n${results}`;
+	  results_editor.setValue(output)
+	  
+      }
+      async function run() {
+	  await init()
+	  document.getElementById('eval').onclick = eval_query;
+      }
+      run();
+    </script>
+
+
+</body>
+</html>
