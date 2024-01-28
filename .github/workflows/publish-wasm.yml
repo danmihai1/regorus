@@ -23,9 +23,10 @@ jobs:
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - name: Build
-        run: wasm-pack build --target nodejs -r
+        run: wasm-pack build --target nodejs --release
+        working-directory: ./bindings/wasm
       - name: Publish
         run: wasm-pack publish --target nodejs
+        working-directory: ./bindings/wasm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
-          
