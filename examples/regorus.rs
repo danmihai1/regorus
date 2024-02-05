@@ -46,8 +46,13 @@ fn rego_eval(
                 regorus::Value::from_json_file(file)?
             } else if file.ends_with(".yaml") {
                 regorus::Value::from_yaml_file(file)?
+            } else if file.ends_with(".xml") {
+                match std::fs::read_to_string(file) {
+                    Ok(c) => serde_xml_rs::from_str(c.as_str())?,
+                    Err(e) => bail!("Failed to read {file}. {e}"),
+                }
             } else {
-                bail!("Unsupported data file `{file}`. Must be rego, json or yaml.")
+                bail!("Unsupported data file `{file}`. Must be rego, json, yaml or xml.")
             };
 
             // Merge given data.
@@ -60,8 +65,13 @@ fn rego_eval(
             regorus::Value::from_json_file(&file)?
         } else if file.ends_with(".yaml") {
             regorus::Value::from_yaml_file(&file)?
+        } else if file.ends_with(".xml") {
+            match std::fs::read_to_string(&file) {
+                Ok(c) => serde_xml_rs::from_str(c.as_str())?,
+                Err(e) => bail!("Failed to read {file}. {e}"),
+            }
         } else {
-            bail!("Unsupported input file `{file}`. Must be json or yaml.")
+            bail!("Unsupported input file `{file}`. Must be json, yaml or xml.")
         };
         engine.set_input(input);
     }
