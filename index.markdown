@@ -12,7 +12,7 @@ layout: home
 <title>Regorus Playground</title>
 <link
 rel="stylesheet"
-href="{{'style.css'|relative_url}}"
+href="/style.css"
 />
 </head>
 <body>
@@ -41,11 +41,11 @@ href="{{'style.css'|relative_url}}"
     </div>
 	
     <script>
-      var require = { paths: { vs: "{{'node_modules/monaco-editor/min/vs'|relative_url}}" } };
+      var require = { paths: { vs: "/node_modules/monaco-editor/min/vs" } };
     </script>
-    <script src="{{'node_modules/monaco-editor/min/vs/loader.js'|relative_url}}"></script>
-    <script src="{{'node_modules/monaco-editor/min/vs/editor/editor.main.nls.js'|relative_url}}"></script>
-    <script src="{{'node_modules/monaco-editor/min/vs/editor/editor.main.js'|relative_url}}"></script>
+    <script src="/node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script src="/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
 	
 	    <script type="module">
 
@@ -54,7 +54,7 @@ href="{{'style.css'|relative_url}}"
       import init, { Engine } from "{{'pkg/regorus.js'|relative_url}}";
 
       function loadFile(filePath) {
-	      filePath = `{{site.baseurl}}${filePath}`
+	      filePath = `/${filePath}`
      	   var result = null;
 	       var xmlhttp = new XMLHttpRequest();
 	      xmlhttp.open("GET", filePath, false);
