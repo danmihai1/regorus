@@ -4,7 +4,7 @@ description: >- # this means to ignore newlines until "baseurl:"
   Run Regorus in a browser via WASM
 url: "https://anakrish.github.io"
 baseurl: "/"
-include: ["examples", "node_modules", "pkg"]
+include: ["examples", "node_modules", "pkg", "style.css"]
 # Build settings
 #theme: minimal
 
