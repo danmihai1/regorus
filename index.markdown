@@ -12,28 +12,34 @@ layout: home
 <title>Regorus Playground</title>
 <link
 rel="stylesheet"
-data-name="vs/editor/editor.main"
-href="{{'node_modules/monaco-editor/min/vs/editor/editor.main.css'|relative_url}}"
+href="{{'style.css'|relative_url}}"
 />
 </head>
 <body>
-<h2>Regorus Playground</h2>
+    <h1>Regorus Playground</h1>
+    <div class="pane">
+        <div class="left-pane">
+            <h2>Rego</h2>
+            <div id="Rego" class="rego-box"></div>
+        </div>
 
-    <div id="leftPane" style="height:1000px; width:700px; float:inline-start">
-      <div class="paneheader">Policy</div>
-
-      <div id="rego_container" style="height:700px; width: 700px; border: 1px solid grey"></div>
+        <div class="right-pane-container">
+            <div class="button-container">
+                <button id="SelectInput" class="json-button">Input JSON</button>
+                <button id="SelectData" class="json-button">Data JSON</button>
+                <button id="Eval" class="json-button">Eval</button>
+            </div>
+            <div class="input-box-container">
+                <div id="Input" class="input-box"></div>
+                <div id="Data" class="data-box"></div>
+            </div>
+            <div class="output-box-container">
+                <h2>Output</h2>
+                <div id="Output" class="output-box"></div>
+            </div>
+        </div>
     </div>
-
-    <div style="width:20px; height:600px;float:left"></div>
-
-    <div id="rightPane" style="width:600px; height:600px; float:inline-start">
-      <div class="paneheader"> Input JSON</div>
-      <div id="input_container" style="height:300px;border: 1px solid grey"></div>
-<button id="eval" stype="height:10px;padding:float:left">Eval</button>
-      <pre id="results" style="height:300px; border: 1px solid grey"></pre>
-    </div>
-
+	
     <script>
       var require = { paths: { vs: "{{'node_modules/monaco-editor/min/vs'|relative_url}}" } };
     </script>
@@ -146,19 +152,25 @@ href="{{'node_modules/monaco-editor/min/vs/editor/editor.main.css'|relative_url}
 
       let separator = "\n###POLICY###\n"
       let framework_rego = 'package play'
-      var rego_editor = monaco.editor.create(document.getElementById('rego_container'), {
+      var rego_editor = monaco.editor.create(document.getElementById('Rego'), {
 	  value: framework_rego,
 	  language: 'Rego',
 	  minimap: { enabled: false },
       });
 
-      var input_editor = monaco.editor.create(document.getElementById('input_container'), {
+      var input_editor = monaco.editor.create(document.getElementById('Input'), {
 	  value: '{}',
-	  language: 'javascript',
+	  language: 'json',
 	  minimap: { enabled: false },
       });
 
-      var results_editor = monaco.editor.create(document.getElementById('results'), {
+      var data_editor = monaco.editor.create(document.getElementById('Data'), {
+	  value: '{}',
+	  language: 'json',
+	  minimap: { enabled: false },
+      });
+	  
+      var results_editor = monaco.editor.create(document.getElementById('Output'), {
 	  value: '{}',
 	  language: 'json',
 	  readOnly: true,
@@ -167,30 +179,44 @@ href="{{'node_modules/monaco-editor/min/vs/editor/editor.main.css'|relative_url}
 
       rego_editor.setValue(loadFile("examples/example.rego"))
       input_editor.setValue(loadFile("examples/input.json"))
+	  data_editor.setValue("{}")
+      document.getElementById('Data').style.display = 'none'
 
       function eval_query() {
-	  let policy = rego_editor.getValue();
-	  let files = policy.split(separator)
+		  let policy = rego_editor.getValue();
+		  let files = policy.split(separator)
 
-	  var startTime = new Date();
-	  var engine = new Engine();
-	  for (var i =0; i < files.length; ++i) {
-	      engine.add_policy("policy.rego", files[i])
+          try {
+			  var startTime = new Date();
+			  var engine = new Engine();
+			  for (var i =0; i < files.length; ++i) {
+				  engine.add_policy("policy.rego", files[i])
+              }
+
+			  engine.set_input(input_editor.getValue());
+			  engine.add_data(data_editor.getValue());
+			  let parse_time = new Date() - startTime;
+
+              let results = engine.eval_query("data");
+    		  var elapsed = new Date() - startTime;
+			  let output = `// Evaluation took ${elapsed} milliseconds. parse = ${parse_time}, eval = ${elapsed - parse_time}\n${results}`;
+			  results_editor.setValue(output)
+          }
+		  catch (error) {
+		      results_editor.setValue(error)
+		  }
 	  }
-
-	  let input = input_editor.getValue();
-	  engine.set_input(input);
-	  
-	  let results = engine.eval_query("data");
-	  var elapsed = new Date() - startTime;
-
-	  let output = `// Evaluation took ${elapsed} milliseconds.\n${results}`;
-	  results_editor.setValue(output)
-	  
-      }
       async function run() {
 	  await init()
-	  document.getElementById('eval').onclick = eval_query;
+	  document.getElementById('Eval').onclick = eval_query;
+	  document.getElementById('SelectInput').onclick = function() {
+	    document.getElementById('Data').style.display = 'none'
+	    document.getElementById('Input').style.display = 'inline'
+	  }
+	  document.getElementById('SelectData').onclick = function() {
+	    document.getElementById('Input').style.display = 'none'
+	    document.getElementById('Data').style.display = 'inline'
+	  }
       }
       run();
     </script>

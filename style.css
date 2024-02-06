@@ -1,0 +1,124 @@
+body {
+    font-family: sans-serif;
+    background-color: rgba(218, 218, 211, .75);
+    color: var(--font-color);
+    max-width: 90%;
+    margin: 0 auto;
+    font-size: 18px;
+}
+
+
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+    margin-top: 2vh;
+}
+
+h2 {
+    color: var(--heading-color);
+    font-size: 1rem;
+}
+
+.pane {
+    width: 100%;
+    height: 85%;
+    position: relative;
+    display: flex
+}
+
+.left-pane {
+    flex: 1;
+    margin-right: 15px;
+}
+.rego-box {
+    width: 100%;
+    height: 100%;
+    border-top: inset 3px;
+    border-left: inset 3px;
+    border-right: inset 3px rgb(192, 188, 188);
+    border-bottom: inset 3px rgb(192, 188, 188);
+}
+
+
+
+
+.right-pane-container {
+    flex: 1;
+}
+
+.button-container {
+    height: 5%;
+    margin-top: 9px;
+ }
+
+.input-box-container {
+    height: 50%;
+ }
+
+.input-box {
+    height: 100%;
+    border-top: inset 3px;
+    border-left: inset 3px;
+    border-right: inset 3px rgb(192, 188, 188);
+    border-bottom: inset 3px rgb(192, 188, 188);
+}
+
+.data-box-container {
+    height: 50%;
+}
+.data-box {
+    height: 100%;
+    border-top: inset 3px;
+    border-left: inset 3px;
+    border-right: inset 3px rgb(192, 188, 188);
+    border-bottom: inset 3px rgb(192, 188, 188);
+    display: block;
+}
+
+.output-box-container {
+    height: 40%;
+    display: block;
+}
+.output-box {
+    height: 95%;
+    border-top: inset 3px;
+    border-left: inset 3px;
+    border-right: inset 3px rgb(192, 188, 188);
+    border-bottom: inset 3px rgb(192, 188, 188);
+}
+
+
+.json-button {
+  background-color: #FFFFFF;
+  border: 1px solid rgb(209,213,219);
+  border-radius: .5rem;
+  box-sizing: border-box;
+  color: #111827;
+  font-family: "Inter var",ui-sans-serif,system-ui,-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  padding: .15rem 1rem;
+  text-align: center;
+  text-decoration: none #D1D5DB solid;
+  text-decoration-thickness: auto;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.json-button:hover {
+  background-color: rgb(249,250,251);
+}
+
+.json-button:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.json-button:focus-visible {
+  box-shadow: none;
+}
