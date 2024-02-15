@@ -23,6 +23,7 @@ default = ["full-opa", "arc"]
 arc = ["scientific/arc"]
 base64 = ["dep:data-encoding"]
 base64url = ["dep:data-encoding"]
+coverage = []
 crypto = ["dep:constant_time_eq", "dep:hmac", "dep:hex", "dep:md-5", "dep:sha1", "dep:sha2"]
 deprecated = []
 hex = ["dep:data-encoding"]
@@ -41,6 +42,7 @@ yaml = ["serde_yaml"]
 full-opa = [
     "base64",
     "base64url",
+    "coverage",
     "crypto",
     "deprecated",
     "glob",
