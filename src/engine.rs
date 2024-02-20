@@ -453,4 +453,23 @@ impl Engine {
     ) -> Result<()> {
         self.interpreter.add_extension(path, nargs, extension)
     }
+
+    #[cfg(feature = "coverage")]
+    pub fn get_coverage_report(&self) -> Result<crate::coverage::Report> {
+        self.interpreter.get_coverage_report()
+    }
+
+    #[cfg(feature = "coverage")]
+    pub fn set_enable_coverage(&mut self, enable: bool) {
+        self.interpreter.set_enable_coverage(enable)
+    }
+
+    #[cfg(feature = "coverage")]
+    pub fn clear_coverage_data(&mut self) {
+        self.interpreter.clear_coverage_data()
+    }
+
+    pub fn take_prints(&mut self) -> Result<Vec<String>> {
+        self.interpreter.take_prints()
+    }
 }

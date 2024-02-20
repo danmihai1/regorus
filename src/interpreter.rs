@@ -66,6 +66,12 @@ pub struct Interpreter {
     strict_builtin_errors: bool,
     imports: BTreeMap<String, Ref<Expr>>,
     extensions: HashMap<String, (u8, Rc<Box<dyn Extension>>)>,
+
+    #[cfg(feature = "coverage")]
+    coverage: HashMap<Source, Vec<bool>>,
+    #[cfg(feature = "coverage")]
+    enable_coverage: bool,
+    prints: Vec<String>,
 }
 
 impl Default for Interpreter {
@@ -177,6 +183,13 @@ impl Interpreter {
             strict_builtin_errors: true,
             imports: BTreeMap::default(),
             extensions: HashMap::new(),
+
+            #[cfg(feature = "coverage")]
+            coverage: HashMap::new(),
+            #[cfg(feature = "coverage")]
+            enable_coverage: false,
+
+            prints: Vec::new(),
         }
     }
 
@@ -2045,7 +2058,7 @@ impl Interpreter {
             }
         }
 
-        let v = builtin.0(span, params, &args[..], self.strict_builtin_errors)?;
+        let mut v = builtin.0(span, params, &args[..], self.strict_builtin_errors)?;
 
         // Handle trace function.
         // TODO: with modifier.
@@ -2054,6 +2067,9 @@ impl Interpreter {
                 traces.push(msg.clone());
                 return Ok(Value::Bool(true));
             }
+        } else if name == "print" {
+            self.prints.push(v.as_string()?.as_ref().to_string());
+            v = Value::Bool(true);
         }
 
         if let Some(name) = cache {
@@ -3474,5 +3490,130 @@ impl Interpreter {
         } else {
             bail!("extension already added");
         }
+    }
+
+    #[cfg(feature = "coverage")]
+    fn gather_coverage_in_query(
+        &self,
+        query: &Ref<Query>,
+        covered: &Vec<bool>,
+        file: &mut crate::coverage::File,
+    ) -> Result<()> {
+        for stmt in &query.stmts {
+            // TODO: with mods
+            match &stmt.literal {
+                Literal::SomeVars { .. } => (),
+                Literal::SomeIn {
+                    value, collection, ..
+                } => {
+                    self.gather_coverage_in_expr(value, covered, file)?;
+                    self.gather_coverage_in_expr(collection, covered, file)?;
+                }
+                Literal::Expr { expr, .. } | Literal::NotExpr { expr, .. } => {
+                    self.gather_coverage_in_expr(expr, covered, file)?;
+                }
+                Literal::Every { domain, query, .. } => {
+                    self.gather_coverage_in_expr(domain, covered, file)?;
+                    self.gather_coverage_in_query(query, covered, file)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "coverage")]
+    fn gather_coverage_in_expr(
+        &self,
+        expr: &Ref<Expr>,
+        covered: &Vec<bool>,
+        file: &mut crate::coverage::File,
+    ) -> Result<()> {
+        use Expr::*;
+        traverse(expr, &mut |e| {
+            Ok(match e.as_ref() {
+                ArrayCompr { query, .. } | SetCompr { query, .. } | ObjectCompr { query, .. } => {
+                    self.gather_coverage_in_query(query, covered, file)?;
+                    false
+                }
+                _ => {
+                    let line = e.span().line as usize;
+                    if line >= covered.len() || !covered[line] {
+                        file.not_covered.insert(line as u32);
+                    } else if line < covered.len() && covered[line] {
+                        file.covered.insert(line as u32);
+                    }
+                    true
+                }
+            })
+        })?;
+        Ok(())
+    }
+
+    #[cfg(feature = "coverage")]
+    pub fn get_coverage_report(&self) -> Result<crate::coverage::Report> {
+        let mut report = crate::coverage::Report::default();
+
+        for module in self.modules.iter() {
+            let span = module.package.refr.span();
+
+            // Get coverage information for the module.
+            let Some(covered) = self.coverage.get(&span.source) else {
+                continue;
+            };
+
+            let mut file = crate::coverage::File {
+                path: span.source.file().clone(),
+                code: span.source.contents().clone(),
+                covered: BTreeSet::new(),
+                not_covered: BTreeSet::new(),
+            };
+
+            // Loop through each rule and figure out the lines that were not coverd.
+            for rule in &module.policy {
+                match rule.as_ref() {
+                    Rule::Spec { head, bodies, .. } => {
+                        match head {
+                            RuleHead::Compr { assign, .. } | RuleHead::Func { assign, .. } => {
+                                if let Some(a) = assign {
+                                    self.gather_coverage_in_expr(&a.value, covered, &mut file)?;
+                                }
+                            }
+                            RuleHead::Set { key, .. } => {
+                                if let Some(k) = key {
+                                    self.gather_coverage_in_expr(k, covered, &mut file)?;
+                                }
+                            }
+                        }
+                        for b in bodies {
+                            self.gather_coverage_in_query(&b.query, covered, &mut file)?;
+                        }
+                    }
+                    Rule::Default { value, .. } => {
+                        self.gather_coverage_in_expr(value, covered, &mut file)?;
+                    }
+                }
+            }
+
+            report.files.push(file);
+        }
+
+        Ok(report)
+    }
+
+    #[cfg(feature = "coverage")]
+    pub fn set_enable_coverage(&mut self, enable: bool) {
+        if self.enable_coverage != enable {
+            self.enable_coverage = enable;
+            self.clear_coverage_data();
+        }
+    }
+
+    #[cfg(feature = "coverage")]
+    pub fn clear_coverage_data(&mut self) {
+        self.coverage = HashMap::new();
+    }
+
+    pub fn take_prints(&mut self) -> Result<Vec<String>> {
+        Ok(std::mem::take(&mut self.prints))
     }
 }

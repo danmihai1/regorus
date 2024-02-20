@@ -70,6 +70,18 @@ fn rego_eval(
     let results = engine.eval_query(query, enable_tracing)?;
     println!("{}", serde_json::to_string_pretty(&results)?);
 
+    #[cfg(feature = "coverage")]
+    if coverage {
+        let report = engine.get_coverage_report()?;
+        println!("{}", report.to_colored_string()?);
+    }
+
+    // Emit prints
+    let prints = engine.take_prints()?;
+    for p in prints.into_iter() {
+        println!("{p}");
+    }
+
     Ok(())
 }
 
