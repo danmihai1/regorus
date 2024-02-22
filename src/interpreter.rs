@@ -2058,7 +2058,12 @@ impl Interpreter {
             }
         }
 
-        let mut v = builtin.0(span, params, &args[..], self.strict_builtin_errors)?;
+        let mut v = match builtin.0(span, params, &args[..], self.strict_builtin_errors) {
+            Ok(v) => v,
+            // Ignore errors if we are not evaluating in strict mode.
+            Err(_) if !self.strict_builtin_errors => return Ok(Value::Undefined),
+            Err(e) => Err(e)?,
+        };
 
         // Handle trace function.
         // TODO: with modifier.
