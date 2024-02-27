@@ -267,8 +267,98 @@ impl Engine {
 
     pub fn eval_bool_query(&mut self, query: String, enable_tracing: bool) -> Result<bool> {
         let results = self.eval_query(query, enable_tracing)?;
-        if results.result.len() != 1 || results.result[0].expressions.len() != 1 {
-            bail!("query did not produce exactly one value");
+        match results.result.len() {
+            0 => bail!("query did not produce any values"),
+            1 if results.result[0].expressions.len() == 1 => {
+                results.result[0].expressions[0].value.as_bool().copied()
+            }
+            _ => bail!("query produced more than one value"),
+        }
+    }
+
+    pub fn eval_bool_query_top_down(
+        &mut self,
+        query: String,
+        enable_tracing: bool,
+    ) -> Result<bool> {
+        let results = self.eval_query_top_down(query, enable_tracing)?;
+        match results.result.len() {
+            0 => bail!("query did not produce any values"),
+            1 if results.result[0].expressions.len() == 1 => {
+                results.result[0].expressions[0].value.as_bool().copied()
+            }
+            _ => bail!("query produced more than one value"),
+        }
+    }
+
+    /// Evaluate an `allow` query.
+    ///
+    /// This is a wrapper over [`Engine::eval_bool_query`] that returns true only if the
+    /// boolean query succeed and produced a `true` value.
+    ///
+    /// ```
+    /// # use regorus::*;
+    /// # fn main() -> anyhow::Result<()> {
+    /// # let mut engine = Engine::new();
+    ///
+    /// let enable_tracing = false;
+    /// assert_eq!(engine.eval_allow_query("1 > 2".to_string(), enable_tracing), false);
+    /// assert_eq!(engine.eval_allow_query("1 < 2".to_string(), enable_tracing), true);
+    ///
+    /// assert_eq!(engine.eval_allow_query("1+1".to_string(), enable_tracing), false);
+    /// assert_eq!(engine.eval_allow_query("true; true".to_string(), enable_tracing), false);
+    /// assert_eq!(engine.eval_allow_query("true; false; true".to_string(), enable_tracing), false);
+    /// # Ok(())
+    /// # }
+    pub fn eval_allow_query(&mut self, query: String, enable_tracing: bool) -> bool {
+        matches!(self.eval_bool_query(query, enable_tracing), Ok(true))
+    }
+
+    /// Evaluate a `deny` query.
+    ///
+    /// This is a wrapper over [`Engine::eval_bool_query`] that returns false only if the
+    /// boolean query succeed and produced a `false` value.
+    /// ```
+    /// # use regorus::*;
+    /// # fn main() -> anyhow::Result<()> {
+    /// # let mut engine = Engine::new();
+    ///
+    /// let enable_tracing = false;
+    /// assert_eq!(engine.eval_deny_query("1 > 2".to_string(), enable_tracing), false);
+    /// assert_eq!(engine.eval_deny_query("1 < 2".to_string(), enable_tracing), true);
+    ///
+    /// assert_eq!(engine.eval_deny_query("1+1".to_string(), enable_tracing), true);
+    /// assert_eq!(engine.eval_deny_query("true; true".to_string(), enable_tracing), true);
+    /// assert_eq!(engine.eval_deny_query("true; false; true".to_string(), enable_tracing), true);
+    /// # Ok(())
+    /// # }
+    pub fn eval_deny_query(&mut self, query: String, enable_tracing: bool) -> bool {
+        !matches!(self.eval_bool_query(query, enable_tracing), Ok(false))
+    }
+
+    pub fn eval_query_top_down(
+        &mut self,
+        query: String,
+        enable_tracing: bool,
+    ) -> Result<QueryResults> {
+        self.prepare_for_eval(enable_tracing)?;
+        self.interpreter.clean_internal_evaluation_state();
+
+        self.interpreter.create_rule_prefixes()?;
+        let query_module = {
+            let source = Source::new(
+                "<query_module.rego>".to_owned(),
+                "package __internal_query_module".to_owned(),
+            );
+            Ref::new(Parser::new(&source)?.parse()?)
+        };
+
+        // Parse the query.
+        let query_source = Source::new("<query.rego>".to_string(), query);
+        let mut parser = Parser::new(&query_source)?;
+        let query_node = parser.parse_user_query()?;
+        if query_node.span.text() == "data" {
+            self.eval_modules(enable_tracing)?;
         }
         results.result[0].expressions[0].value.as_bool().copied()
     }
