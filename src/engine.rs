@@ -265,6 +265,31 @@ impl Engine {
         )
     }
 
+    /// Evaluate a Rego query that produces a boolean value.
+    ///
+    ///
+    /// This function should be preferred over [`Engine::eval_query`] if just a `true`/`false`
+    /// value is desired instead of [`QueryResults`].
+    ///
+    /// ```
+    /// # use regorus::*;
+    /// # fn main() -> anyhow::Result<()> {
+    /// # let mut engine = Engine::new();
+    ///
+    /// let enable_tracing = false;
+    /// assert_eq!(engine.eval_bool_query("1 > 2".to_string(), enable_tracing)?, false);
+    /// assert_eq!(engine.eval_bool_query("1 < 2".to_string(), enable_tracing)?, true);
+    ///
+    /// // Non boolean queries will raise an error.
+    /// assert!(engine.eval_bool_query("1+1".to_string(), enable_tracing).is_err());
+    ///
+    /// // Queries producing multiple values will raise an error.
+    /// assert!(engine.eval_bool_query("true; true".to_string(), enable_tracing).is_err());
+    ///
+    /// // Queries producing no values will raise an error.
+    /// assert!(engine.eval_bool_query("true; false; true".to_string(), enable_tracing).is_err());
+    /// # Ok(())
+    /// # }
     pub fn eval_bool_query(&mut self, query: String, enable_tracing: bool) -> Result<bool> {
         let results = self.eval_query(query, enable_tracing)?;
         match results.result.len() {
@@ -360,7 +385,13 @@ impl Engine {
         if query_node.span.text() == "data" {
             self.eval_modules(enable_tracing)?;
         }
-        results.result[0].expressions[0].value.as_bool().copied()
+        let query_schedule = Analyzer::new().analyze_query_snippet(&self.modules, &query_node)?;
+        self.interpreter.eval_user_query(
+            &query_module,
+            &query_node,
+            &query_schedule,
+            enable_tracing,
+        )
     }
 
     #[doc(hidden)]
@@ -545,21 +576,75 @@ impl Engine {
     }
 
     #[cfg(feature = "coverage")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "coverage")))]
+    /// Get the coverage report.
+    ///
+    /// ```rust
+    /// # use regorus::*;
+    /// # use anyhow::{bail, Result};
+    /// # fn main() -> Result<()> {
+    /// let mut engine = Engine::new();
+    ///
+    /// engine.add_policy(
+    ///    "policy.rego".to_string(),
+    ///    r#"
+    /// package test    # Line 2
+    ///
+    /// x = y {         # Line 4
+    ///   input.a > 2   # Line 5
+    ///   y = 5         # Line 6
+    /// }
+    ///    "#.to_string()
+    /// )?;
+    ///
+    /// // Enable coverage.
+    /// engine.set_enable_coverage(true);
+    ///
+    /// engine.eval_query("data".to_string(), false)?;
+    ///
+    /// let report = engine.get_coverage_report()?;
+    /// assert_eq!(report.files[0].path, "policy.rego");
+    ///
+    /// // Only line 5 is evaluated.
+    /// assert_eq!(report.files[0].covered.iter().cloned().collect::<Vec<u32>>(), vec![5]);
+    ///
+    /// // Line 4 and 6 are not evaluated.
+    /// assert_eq!(report.files[0].not_covered.iter().cloned().collect::<Vec<u32>>(), vec![4, 6]);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// See also [`crate::coverage::Report::to_colored_string`].
     pub fn get_coverage_report(&self) -> Result<crate::coverage::Report> {
         self.interpreter.get_coverage_report()
     }
 
     #[cfg(feature = "coverage")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "coverage")))]
+    /// Enable/disable policy coverage.
+    ///
+    /// If `enable` is different from the current value, then any existing coverage
+    /// information will be cleared.
     pub fn set_enable_coverage(&mut self, enable: bool) {
         self.interpreter.set_enable_coverage(enable)
     }
 
     #[cfg(feature = "coverage")]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = "coverage")))]
+    /// Clear the gathered policy coverage data.
     pub fn clear_coverage_data(&mut self) {
         self.interpreter.clear_coverage_data()
     }
 
     pub fn take_prints(&mut self) -> Result<Vec<String>> {
         self.interpreter.take_prints()
+    }
+
+    pub fn enable_statement_traces(&mut self, enable: bool) {
+        self.interpreter.enable_statement_traces(enable)
+    }
+
+    pub fn take_statement_traces(&mut self) -> Result<Vec<String>> {
+        self.interpreter.take_statement_traces()
     }
 }
